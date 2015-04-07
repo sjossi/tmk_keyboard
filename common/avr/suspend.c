@@ -7,6 +7,10 @@
 #include "backlight.h"
 #include "suspend_avr.h"
 #include "suspend.h"
+#include "timer.h"
+#ifdef PROTOCOL_LUFA
+#include "lufa.h"
+#endif
 
 
 #define wdt_intr_enable(value)   \
@@ -26,30 +30,46 @@ __asm__ __volatile__ (  \
 )
 
 
-void suspend_power_down(void)
+void suspend_idle(uint8_t time)
 {
-#ifdef BACKLIGHT_ENABLE
-    backlight_set(0);
-#endif
-#ifndef NO_SUSPEND_POWER_DOWN
-    // Enable watchdog to wake from MCU sleep
     cli();
-    wdt_reset();
+    set_sleep_mode(SLEEP_MODE_IDLE);
+    sleep_enable();
+    sei();
+    sleep_cpu();
+    sleep_disable();
+}
 
-    // Watchdog Interrupt and System Reset Mode
-    //wdt_enable(WDTO_1S);
-    //WDTCSR |= _BV(WDIE);
-    
+/* Power down MCU with watchdog timer
+ * wdto: watchdog timer timeout defined in <avr/wdt.h>
+ *          WDTO_15MS
+ *          WDTO_30MS
+ *          WDTO_60MS
+ *          WDTO_120MS
+ *          WDTO_250MS
+ *          WDTO_500MS
+ *          WDTO_1S
+ *          WDTO_2S
+ *          WDTO_4S
+ *          WDTO_8S
+ */
+static uint8_t wdt_timeout = 0;
+static void power_down(uint8_t wdto)
+{
+#ifdef PROTOCOL_LUFA
+    if (USB_DeviceState == DEVICE_STATE_Configured) return;
+#endif
+    wdt_timeout = wdto;
+
     // Watchdog Interrupt Mode
-    wdt_intr_enable(WDTO_120MS);
-    
+    wdt_intr_enable(wdto);
+
     // TODO: more power saving
     // See PicoPower application note
     // - I/O port input with pullup
     // - prescale clock
     // - BOD disable
     // - Power Reduction Register PRR
-    // sleep in power down mode
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     sleep_enable();
     sei();
@@ -58,12 +78,18 @@ void suspend_power_down(void)
 
     // Disable watchdog after sleep
     wdt_disable();
-#endif
+}
+
+void suspend_power_down(void)
+{
+    power_down(WDTO_15MS);
 }
 
 bool suspend_wakeup_condition(void)
 {
+    matrix_power_up();
     matrix_scan();
+    matrix_power_down();
     for (uint8_t r = 0; r < MATRIX_ROWS; r++) {
         if (matrix_get_row(r)) return true;
     }
@@ -84,15 +110,13 @@ void suspend_wakeup_init(void)
 /* watchdog timeout */
 ISR(WDT_vect)
 {
-    /* wakeup from MCU sleep mode */
-/*
-    // blink LED
-    static uint8_t led_state = 0;
-    static uint8_t led_count = 0;
-    led_count++;
-    if ((led_count & 0x07) == 0) {
-        led_set((led_state ^= (1<<USB_LED_CAPS_LOCK)));
+    // compensate timer for sleep
+    switch (wdt_timeout) {
+        case WDTO_15MS:
+            timer_count += 15 + 2;  // WDTO_15MS + 2(from observation)
+            break;
+        default:
+            ;
     }
-*/
 }
 #endif

@@ -39,7 +39,7 @@
 #----------------------------------------------------------------------------
 
 # Target file name (without extension).
-TARGET = hhkb_lufa
+TARGET = planck_lufa
 
 # Directory common source filess exist
 TOP_DIR = ../..
@@ -47,25 +47,34 @@ TOP_DIR = ../..
 # Directory keyboard dependent files exist
 TARGET_DIR = .
 
+# # project specific files
+# SRC =	keymap_common.c \
+# 	matrix_handwire.c \
+# 	led.c \
+# 	backlight.c
 
-# List C source files here. (C dependencies are automatically generated.)
-SRC +=	keymap_common.c \
-	matrix.c \
-	led.c
+# ifdef KEYMAP
+#     SRC := keymap_$(KEYMAP).c $(SRC)
+# else
+#     SRC := keymap_jack.c $(SRC)
+# endif
+
+# project specific files
+SRC =	extended_keymap_common.c \
+	matrix_handwire.c \
+	led.c \
+	backlight.c
 
 ifdef KEYMAP
-    SRC := keymap_$(KEYMAP).c $(SRC)
+    SRC := extended_keymap_$(KEYMAP).c $(SRC)
 else
-    SRC := keymap_hasu.c $(SRC)
+    SRC := extended_keymap_jack.c $(SRC)
 endif
 
 CONFIG_H = config.h
 
-
 # MCU name
-# PJRC Teensy++ 2.0
-#MCU = at90usb1286
-# TMK Alt Controller or PJRC Teensy 2.0
+#MCU = at90usb1287
 MCU = atmega32u4
 
 # Processor frequency.
@@ -101,14 +110,14 @@ ARCH = AVR8
 #     CPU clock adjust registers or the clock division fuses), this will be equal to F_CPU.
 F_USB = $(F_CPU)
 
-# Interrupt driven control endpoint task
-#OPT_DEFS += -DINTERRUPT_CONTROL_ENDPOINT
+# Interrupt driven control endpoint task(+60)
+OPT_DEFS += -DINTERRUPT_CONTROL_ENDPOINT
 
 
 # Boot Section Size in *bytes*
 #   Teensy halfKay   512
 #   Teensy++ halfKay 1024
-#   Atmel DFU loader 4096	(TMK Alt Controller)
+#   Atmel DFU loader 4096
 #   LUFA bootloader  4096
 #   USBaspLoader     2048
 OPT_DEFS += -DBOOTLOADER_SIZE=4096
@@ -117,14 +126,18 @@ OPT_DEFS += -DBOOTLOADER_SIZE=4096
 # Build Options
 #   comment out to disable the options.
 #
-BOOTMAGIC_ENABLE = yes		# Virtual DIP switch configuration
-MOUSEKEY_ENABLE = yes		# Mouse keys
-EXTRAKEY_ENABLE = yes		# Audio control and System control
-#CONSOLE_ENABLE = yes		# Console for debug
-COMMAND_ENABLE = yes    	# Commands for debug and configuration
-NKRO_ENABLE = yes		# USB Nkey Rollover
-KEYMAP_SECTION_ENABLE = yes	# fixed address keymap for keymap editor
+BOOTMAGIC_ENABLE = yes	# Virtual DIP switch configuration(+1000)
+MOUSEKEY_ENABLE = yes	# Mouse keys(+4700)
+EXTRAKEY_ENABLE = yes	# Audio control and System control(+450)
+CONSOLE_ENABLE = yes	# Console for debug(+400)
+COMMAND_ENABLE = yes    # Commands for debug and configuration
+# Do not enable SLEEP_LED_ENABLE. it uses the same timer as BACKLIGHT_ENABLE
+#SLEEP_LED_ENABLE = yes  # Breathing sleep LED during USB suspend
+NKRO_ENABLE = yes	# USB Nkey Rollover - not yet supported in LUFA
+BACKLIGHT_ENABLE = yes  # Enable keyboard backlight functionality
 
+# Optimize size but this may cause error "relocation truncated to fit"
+#EXTRALDFLAGS = -Wl,--relax
 
 # Search Path
 VPATH += $(TARGET_DIR)
@@ -133,9 +146,3 @@ VPATH += $(TOP_DIR)
 include $(TOP_DIR)/protocol/lufa.mk
 include $(TOP_DIR)/common.mk
 include $(TOP_DIR)/rules.mk
-
-debug-on: EXTRAFLAGS += -DDEBUG -DDEBUG_ACTION
-debug-on: all
-
-debug-off: EXTRAFLAGS += -DNO_DEBUG -DNO_PRINT
-debug-off: all

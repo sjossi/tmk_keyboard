@@ -18,18 +18,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DEBUG_H
 #define DEBUG_H 1
 
+#include <stdbool.h>
 #include "print.h"
 
 
-/* 
- * Debug output control
- */
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/*
+ * Debug output control
+ */
 typedef union {
-    uint8_t raw;
     struct {
         bool enable:1;
         bool matrix:1;
@@ -37,20 +37,20 @@ typedef union {
         bool mouse:1;
         uint8_t reserved:4;
     };
+    uint8_t raw;
 } debug_config_t;
 
 extern debug_config_t debug_config;
-debug_config_t debug_config  __attribute__ ((weak)) = {};
 
 #ifdef __cplusplus
 }
 #endif
 
+/* for backward compatibility */
 #define debug_enable    (debug_config.enable)
 #define debug_matrix    (debug_config.matrix)
 #define debug_keyboard  (debug_config.keyboard)
 #define debug_mouse     (debug_config.mouse)
-
 
 
 /*
@@ -87,9 +87,8 @@ debug_config_t debug_config  __attribute__ ((weak)) = {};
 #define debug_bin(data)             debug_bin8(data)
 #define debug_bin_reverse(data)     debug_bin8(data)
 
-#else
+#else /* NO_DEBUG */
 
-/* NO_DEBUG */
 #define dprint(s)
 #define dprintln(s)
 #define dprintf(fmt, ...)
@@ -113,6 +112,6 @@ debug_config_t debug_config  __attribute__ ((weak)) = {};
 #define debug_bin(data)
 #define debug_bin_reverse(data)
 
-#endif
+#endif /* NO_DEBUG */
 
 #endif
