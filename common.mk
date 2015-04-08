@@ -15,8 +15,10 @@ SRC +=	$(COMMON_DIR)/host.c \
 	$(COMMON_DIR)/keymap.c \
 	$(COMMON_DIR)/debug.c \
 	$(COMMON_DIR)/util.c \
+	$(COMMON_DIR)/print.c \
 	$(PLATFORM_DIR)/suspend.c \
-	$(PLATFORM_DIR)/bootloader.c
+	$(PLATFORM_DIR)/bootloader.c \
+	$(PLATFORM_DIR)/xprintf.S \
 
 ifeq (PLATFORM,avr)
 	$(COMMON_DIR)/print.c \
