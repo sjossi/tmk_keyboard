@@ -1,6 +1,12 @@
-[submodule "protocol/lufa/LUFA-git"]
-	path = protocol/lufa/LUFA-git
-	url = https://github.com/abcminiuser/lufa.git
-[submodule "protocol/usb_hid/USB_Host_Shield_2.0"]
-	path = protocol/usb_hid/USB_Host_Shield_2.0
-	url = https://github.com/felis/USB_Host_Shield_2.0.git
+[submodule "lib/chibios"]
+	path = lib/chibios
+	url = https://github.com/qmk/ChibiOS
+[submodule "lib/chibios-contrib"]
+	path = lib/chibios-contrib
+	url = https://github.com/qmk/ChibiOS-Contrib
+[submodule "lib/ugfx"]
+	path = lib/ugfx
+	url = https://github.com/qmk/uGFX
+[submodule "lib/googletest"]
+	path = lib/googletest
+	url = https://github.com/google/googletest
